@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>First Time Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #background-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        body {
+            background: linear-gradient(to right, #2c5364, #203a43, #0f2027);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .box {
+            background-color: #ffffffdd;
+            padding: 40px 30px;
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        h1 {
+            color: #0047b3;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #0073e6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            background-color: #005bb5;
+        }
+
+        a {
+            display: block;
+            margin-top: 15px;
+            color: #0073e6;
+            text-decoration: underline;
+        }
+
+        .flash-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        #error {
+            color: red;
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Live Background Canvas -->
+    <canvas id="background-canvas"></canvas>
+
+    <div class="box">
+        <h1>First Time Login</h1>
+
+        <!-- Flash Messages from Flask -->
+        <!-- Flash Messages from Flask -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message {% if category == 'success' %}flash-success{% else %}flash-error{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+
+
+        <!-- HTML Form for submitting -->
+        <form method="POST" action="{{ url_for('first_time_login') }}">
+            <input type="text" name="username" placeholder="Enter Username" required autocomplete="off" />
+            <input type="email" name="email" placeholder="Enter Registered Email" required autocomplete="off" />
+            <button type="submit" class="btn">Send Password Set Link</button>
+        </form>
+
+        <a href="{{ url_for('login_page') }}">Back to Login</a>
+    </div>
+
+    <!-- Background Canvas Script -->
+    <script>
+        const canvas = document.getElementById("background-canvas");
+        const ctx = canvas.getContext("2d");
+        let width, height, particles;
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 1.2,
+                    vy: (Math.random() - 0.5) * 1.2,
+                    radius: Math.random() * 1.5 + 1,
+                });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            for (let i = 0; i < particles.length; i++) {
+                const p1 = particles[i];
+                ctx.beginPath();
+                ctx.arc(p1.x, p1.y, p1.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "#66b3ff";
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = "rgba(102, 179, 255, 0.08)";
+                        ctx.stroke();
+                    }
+                }
+
+                p1.x += p1.vx;
+                p1.y += p1.vy;
+
+                if (p1.x < 0 || p1.x > width) p1.vx *= -1;
+                if (p1.y < 0 || p1.y > height) p1.vy *= -1;
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener("resize", initCanvas);
+        initCanvas();
+        draw();
+    </script>
+
+</body>
+
+</html>

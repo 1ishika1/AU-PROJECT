@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>AU Small Finance Bank - Alert Management System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: linear-gradient(to right, #dfefff, #f2faff);
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .branding {
+            background-color: #e3c308;
+            /* gold background */
+            color: white;
+            /* white text */
+            font-size: 24px;
+            font-weight: 900;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            /* circle shape */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 50px auto;
+            background-color: #ffffffea;
+            border-radius: 16px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            padding: 40px 30px;
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s;
+        }
+
+        .container:hover {
+            transform: scale(1.01);
+        }
+
+        h3 {
+            margin-bottom: 20px;
+            color: #003366;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group input {
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #bbb;
+            font-size: 15px;
+            transition: 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 8px #007bff55;
+        }
+
+        button {
+            grid-column: span 2;
+            padding: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #005bb5;
+        }
+
+        .account-details {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f4f9ff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: 0.3s ease;
+        }
+
+        .card-item {
+            margin-bottom: 20px;
+            padding: 18px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #ccddee;
+            transition: box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card-item:hover {
+            box-shadow: 0 0 12px #007bff77;
+        }
+
+        .card-item p {
+            margin: 6px 0;
+        }
+
+        .alert-details {
+            margin-top: 12px;
+            background-color: #e6f0ff;
+            border-left: 4px solid #007bff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            button {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div>Account Level View</div>
+        <div class="branding">AU</div>
+    </div>
+
+    <div class="container">
+        <h3>Customer Details</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <input type="text" id="accountNumber" placeholder="Account Number (16+ digits)" />
+            </div>
+            <div class="form-group">
+                <input type="text" id="mobileNumber" placeholder="Mobile Number (10 digits)" />
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="Email (optional)" />
+            </div>
+            <button onclick="fetchDetails()">Fetch Details</button>
+        </div>
+
+        <div class="account-details" id="accountDetails" style="display: none;">
+            <h3>Account Details</h3>
+            <div id="cardList"></div>
+        </div>
+    </div>
+
+<script>
+    async function fetchDetails() {
+        const accountNumber = document.getElementById("accountNumber").value.trim();
+        const mobileNumber = document.getElementById("mobileNumber").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const accountDetailsDiv = document.getElementById("accountDetails");
+        const cardListDiv = document.getElementById("cardList");
+        cardListDiv.innerHTML = "";
+
+        try {
+            const res = await fetch(`/get-account?account_number=${accountNumber}&mobile_number=${mobileNumber}`);
+            if (!res.ok) throw new Error("Account not found");
+
+            const account = await res.json();
+
+            if (email && account.email && account.email !== email) {
+                alert("Email doesn't match.");
+                return;
+            }
+
+            accountDetailsDiv.style.display = "block";
+            account.cards.forEach((card) => {
+                const maskedCardNumber = card.cardNumber.replace(/(\d{4})(\d{8})(\d{4})/, "xxxx xxxx xxxx $3");
+
+                const cardDiv = document.createElement("div");
+                cardDiv.className = "card-item";
+                cardDiv.innerHTML = `
+                    <p><strong>Account Holder:</strong> ${account.name}</p>
+                    <p><strong>Account Number:</strong> ${account.account_number}</p>
+                    <p><strong>Card Number:</strong> ${maskedCardNumber}</p>
+                    <p><strong>CIF:</strong> ${card.cif}</p>
+                `;
+
+                cardDiv.addEventListener("click", () => {
+                    const alertData = {
+                        name: account.name,
+                        accountNumber: account.account_number,
+                        cardNumber: maskedCardNumber,
+                        cif: card.cif,
+                        alerts: card.alerts,
+                    };
+                    localStorage.setItem("selectedCard", JSON.stringify(alertData));
+                    window.location.href = "alerts.html";
+                });
+
+                cardListDiv.appendChild(cardDiv);
+            });
+
+        } catch (err) {
+            alert("Account not found or error fetching data.");
+            console.error(err);
+        }
+    }
+</script>
+
+</body>
+
+</html>

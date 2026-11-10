@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Card Alert Details</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background-color: #e8f0fe;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .details-box {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background-color: #f5faff;
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    select,
+    input[type="date"] {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 180px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .calendar-button {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: white;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .calendar-icon {
+      width: 20px;
+      height: 20px;
+      background: url('https://img.icons8.com/ios-filled/50/calendar.png') no-repeat center center;
+      background-size: contain;
+    }
+
+    .calendar-popup {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      position: absolute;
+      z-index: 100;
+      top: 60px;
+    }
+
+    .tables-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #dbe9ff;
+    }
+
+    .clickable {
+      cursor: pointer;
+      color: #007BFF;
+      text-decoration: underline;
+    }
+
+    #failureTableContainer {
+      flex: 1;
+      display: none;
+    }
+
+    #alertSummaryWrapper {
+      flex: 2;
+    }
+
+    .relative {
+      position: relative;
+    }
+
+    #subFilterBox {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>Card Details</h2>
+
+  <div class="details-box" id="cardDetails"></div>
+
+  <!-- Filters Section -->
+  <div class="details-box filter-row">
+    <label><strong>Filter Your Search</strong></label>
+
+    <!-- Dropdown Filter 1 -->
+    <div class="filter-box">
+      <select id="filterType1" onchange="handleFilterTypeChange()">
+        <option value="">Search Apply On</option>
+        <option value="demo2">Division</option>
+        <option value="demo3">Sub-Divison</option>
+      </select>
+    </div>
+
+    <!-- Sub Filter -->
+    <div class="filter-box" id="subFilterBox">
+      <select id="divisionFilter">
+        <option value="">Select Option</option>
+      </select>
+    </div>
+
+    <!-- Dropdown Filter 2 -->
+    <div class="filter-box">
+      <select id="channelType">
+        <option value="">Message Type</option>
+        <option value="sms">SMS</option>
+        <option value="otp">OTP</option>
+        <option value="non-otp">Non-OTP</option>
+      </select>
+    </div>
+
+    <!-- Date Picker Button -->
+    <div class="filter-box relative">
+      <button class="calendar-button" onclick="toggleCalendar()">
+        <div class="calendar-icon"></div>
+      </button>
+
+      <div class="calendar-popup" id="calendarPopup">
+        <label><strong>Start Date:</strong></label>
+        <input type="date" id="startDate" />
+        <label><strong>End Date:</strong></label>
+        <input type="date" id="endDate" />
+      </div>
+    </div>
+
+    <div class="filter-box" style="background: none; box-shadow: none;">
+      <button onclick="filterAlerts()">Fetch</button>
+    </div>
+  </div>
+
+  <div class="tables-container">
+    <div class="details-box" id="alertSummaryWrapper">
+      <h3>Alert Summary</h3>
+      <table id="alertSummaryTable">
+        <thead>
+          <tr>
+            <th>Alert</th>
+            <th>Count</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="details-box" id="failureTableContainer">
+      <h3>Failure Details</h3>
+      <table id="failureDetailsTable">
+        <thead>
+          <tr>
+            <th>Failure Type</th>
+            <th>Resolvable</th>
+            <th>Non-Resolvable</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const data = {
+      name: "John Doe",
+      accountNumber: "123456789",
+      cardNumber: "9876 5432 1098 7654",
+      cif: "1122334455",
+      alerts: [
+        { alert: "Fraud detection alert", date: "2024-07-15", channel: "sms" },
+        { alert: "Fraud detection alert", date: "2024-07-15", channel: "otp" },
+        { alert: "Fraud detection alert", date: "2024-07-16", channel: "non-otp" },
+        { alert: "Delivery Failed", date: "2024-08-01", channel: "sms" },
+        { alert: "Delivery Failed", date: "2024-08-01", channel: "sms" },
+        { alert: "User Blocked", date: "2024-08-01", channel: "non-otp" },
+        { alert: "Welcome message sent", date: "2024-08-01", channel: "otp" },
+        { alert: "User Blocked", date: "2024-08-03", channel: "otp" },
+        { alert: "Transaction Completed", date: "2024-08-04", channel: "sms" }
+      ]
+    };
+
+    const sampleFailureData = {
+      "Fraud detection alert": {
+        "Invalid Number": { resolvable: 3, nonResolvable: 1 },
+        "User Blocked": { resolvable: 2, nonResolvable: 2 }
+      },
+      "Delivery Failed": {
+        "Delivery Failed": { resolvable: 2, nonResolvable: 2 }
+      },
+      "User Blocked": {
+        "User Blocked": { resolvable: 1, nonResolvable: 2 }
+      }
+    };
+
+    document.getElementById("cardDetails").innerHTML = `
+      <p><strong>Account Holder:</strong> ${data.name}</p>
+      <p><strong>Account Number:</strong> ${data.accountNumber}</p>
+      <p><strong>Card Number:</strong> ${data.cardNumber}</p>
+      <p><strong>CIF:</strong> ${data.cif}</p>
+    `;
+
+    const divisionOptions = [
+      "VisionBatch", "FSRV", "DEC"
+    ];
+
+    const subDivisionOptions = [
+      "PaymtDueSMS", "ACCTCLOSECUST", "ACCCRBALALRTSMS", "PAYMNTADJSTSMS",
+      "ACCTCLOSELQBLK", "Milestone75KPrd", "Milestone70KPrd", "LegalintiSMS",
+      "InfoCBSMS", "BillingCycleSMS", "Contaclesst2", "DPPMCCTRAN",
+      "CARECHARGEONCC", "CASHBACKPOST"
+    ];
+
+    function toggleCalendar() {
+      const popup = document.getElementById("calendarPopup");
+      popup.style.display = popup.style.display === "flex" ? "none" : "flex";
+    }
+
+    function handleFilterTypeChange() {
+      const type = document.getElementById("filterType1").value;
+      const subBox = document.getElementById("subFilterBox");
+      const dropdown = document.getElementById("divisionFilter");
+
+      if (type === "demo2" || type === "demo3") {
+        subBox.style.display = "flex";
+        dropdown.innerHTML = `<option value="">Select Option</option>`;
+
+        const list = type === "demo2" ? divisionOptions : subDivisionOptions;
+        list.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = opt.text = item;
+          dropdown.appendChild(opt);
+        });
+      } else {
+        subBox.style.display = "none";
+      }
+    }
+
+    function filterAlerts() {
+      checkSessionTimeout();
+
+      const startInput = document.getElementById("startDate").value;
+      const endInput = document.getElementById("endDate").value;
+      const channelInput = document.getElementById("channelType").value;
+
+      const alertSummaryTable = document.getElementById("alertSummaryTable").querySelector("tbody");
+      alertSummaryTable.innerHTML = "";
+      document.getElementById("failureTableContainer").style.display = "none";
+
+      let alertsToShow = data.alerts;
+
+      if (startInput && endInput) {
+        const start = new Date(startInput);
+        const end = new Date(endInput);
+        alertsToShow = alertsToShow.filter(item => {
+          const alertDate = new Date(item.date);
+          return alertDate >= start && alertDate <= end;
+        });
+      }
+
+      if (channelInput) {
+        alertsToShow = alertsToShow.filter(item => item.channel === channelInput);
+      }
+
+      if (alertsToShow.length === 0) {
+        alertSummaryTable.innerHTML = `<tr><td colspan="3">No alerts found with selected filters.</td></tr>`;
+        return;
+      }
+
+      const grouped = {};
+      alertsToShow.forEach(item => {
+        grouped[item.alert] = (grouped[item.alert] || 0) + 1;
+      });
+
+      Object.entries(grouped).forEach(([alertName, count]) => {
+        const row = alertSummaryTable.insertRow();
+        row.insertCell().textContent = alertName;
+        row.insertCell().textContent = count;
+
+        const statusCell = row.insertCell();
+        if (alertName.toLowerCase().includes("fail") || alertName.toLowerCase().includes("fraud") || alertName.toLowerCase().includes("blocked")) {
+          statusCell.textContent = "Failure";
+          statusCell.className = "clickable";
+          statusCell.onclick = () => showFailureBreakdown(sampleFailureData[alertName] || {});
+        } else {
+          statusCell.textContent = "Success";
+        }
+      });
+    }
+
+    function showFailureBreakdown(breakdown) {
+      checkSessionTimeout();
+
+      const tbody = document.getElementById("failureDetailsTable").querySelector("tbody");
+      tbody.innerHTML = "";
+
+      for (const [type, details] of Object.entries(breakdown)) {
+        const row = tbody.insertRow();
+        row.insertCell().textContent = type;
+        row.insertCell().textContent = details.resolvable;
+        row.insertCell().textContent = details.nonResolvable;
+      }
+
+      document.getElementById("failureTableContainer").style.display = "block";
+    }
+
+    const SESSION_TIMEOUT_MS = 60000;
+    let lastActivityTime = Date.now();
+
+    function resetTimer() {
+      lastActivityTime = Date.now();
+    }
+
+    function checkSessionTimeout() {
+      if (Date.now() - lastActivityTime > SESSION_TIMEOUT_MS) {
+        window.location.href = '../Login_Page/index.html';
+      }
+    }
+
+    document.addEventListener("click", resetTimer);
+    document.addEventListener("keydown", resetTimer);
+    document.addEventListener("mousemove", resetTimer);
+    document.addEventListener("scroll", resetTimer);
+
+    window.onload = () => {
+      resetTimer();
+      filterAlerts();
+    };
+
+    window.addEventListener("beforeunload", checkSessionTimeout);
+  </script>
+
+</body>
+
+</html>

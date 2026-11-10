@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portfolio Summary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+      font-size: 2em;
+    }
+
+    .filters, .custom-range {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .filter-buttons form {
+      display: inline;
+    }
+
+    .filter-button {
+      padding: 10px 20px;
+      background-color: #16a085;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    .filter-button.selected {
+      background-color: #117a65;
+    }
+
+    .custom-range input[type="date"] {
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 220px;
+      text-align: center;
+      flex: 1 1 220px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.2em;
+      color: #2c3e50;
+    }
+
+    .card p {
+      font-size: 1.4em;
+      color: #16a085;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+      font-size: 1.1em;
+    }
+
+    canvas {
+      display: block;
+      width: 100% !important;
+      height: auto !important;
+      max-width: 800px;
+      margin: 0 auto 40px;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.6em;
+      }
+
+      .filter-button {
+        font-size: 0.9em;
+        padding: 8px 14px;
+      }
+
+      .custom-range {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .custom-range input,
+      .custom-range button {
+        width: 100%;
+        max-width: 250px;
+        margin: 5px 0;
+      }
+    }
+  </style>
+  <script>
+    function showCustomRange() {
+      document.getElementById('custom-range-form').style.display = 'block';
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Portfolio Alert Summary</h1>
+
+  <div class="filters">
+    <div class="filter-buttons">
+      <form method="get" action="/portfolio.html">
+        <input type="hidden" name="filter" value="daily">
+        <button type="submit" class="filter-button {% if selected_filter == 'daily' %}selected{% endif %}">Daily</button>
+      </form>
+      <form method="get" action="/portfolio.html">
+        <input type="hidden" name="filter" value="last_15">
+        <button type="submit" class="filter-button {% if selected_filter == 'last_15' %}selected{% endif %}">Last 15 Days</button>
+      </form>
+      <form method="get" action="/portfolio.html">
+        <input type="hidden" name="filter" value="last_30">
+        <button type="submit" class="filter-button {% if selected_filter == 'last_30' %}selected{% endif %}">Last 30 Days</button>
+      </form>
+      <button type="button" onclick="showCustomRange()" class="filter-button {% if selected_filter == 'custom' %}selected{% endif %}">Custom Range</button>
+    </div>
+  </div>
+
+  {% if selected_filter == 'custom' %}
+  <div class="custom-range" id="custom-range-form" style="display: block;">
+    <form method="post" action="/portfolio.html?filter=custom">
+      <label for="start_date">Start Date:</label>
+      <input type="date" name="start_date" required>
+      <label for="end_date">End Date:</label>
+      <input type="date" name="end_date" required>
+      <button type="submit" class="filter-button">Apply</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="custom-range" id="custom-range-form" style="display: none;">
+    <form method="post" action="/portfolio.html?filter=custom">
+      <label for="start_date">Start Date:</label>
+      <input type="date" name="start_date" required>
+      <label for="end_date">End Date:</label>
+      <input type="date" name="end_date" required>
+      <button type="submit" class="filter-button">Apply</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if error %}
+    <p class="error">Error: {{ error }}</p>
+  {% endif %}
+
+  {% if counts %}
+  <div class="summary">
+    <div class="card">
+      <h2>Lead Initiation</h2>
+      <p>{{ counts.lead_initiation }}</p>
+    </div>
+    <div class="card">
+      <h2>VisionBatchSMS</h2>
+      <p>{{ counts.visionbatchsms }}</p>
+    </div>
+    <div class="card">
+      <h2>DECIMAL</h2>
+      <p>{{ counts.decimal }}</p>
+    </div>
+    <div class="card">
+      <h2>FSRVTest</h2>
+      <p>{{ counts.fsrvtest }}</p>
+    </div>
+  </div>
+
+  <canvas id="alertChart"></canvas>
+
+<script>
+  const alertData = {{ counts | tojson | safe }};
+  const ctx = document.getElementById('alertChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Lead Initiation', 'VisionBatchSMS', 'DECIMAL', 'FSRVTest'],
+      datasets: [{
+        label: 'Alerts Count',
+        data: [
+          alertData.lead_initiation,
+          alertData.visionbatchsms,
+          alertData.decimal,
+          alertData.fsrvtest
+        ],
+        backgroundColor: ['#1abc9c', '#3498db', '#f39c12', '#e74c3c'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+  {% endif %}
+
+  {% if start_date and end_date %}
+    <p style="text-align: center;"><strong>Showing data from:</strong> {{ start_date }} to {{ end_date }}</p>
+  {% endif %}
+</body>
+</html>

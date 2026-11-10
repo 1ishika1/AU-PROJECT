@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Recovery</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #1f4037, #99f2c8);
+    }
+
+    .box {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .box h2 {
+      margin-bottom: 20px;
+      color: #0073e6;
+    }
+
+    .box input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .box button {
+      width: 100%;
+      padding: 12px;
+      background: #0073e6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .box button:hover {
+      background: #005bb5;
+    }
+
+    .back {
+      margin-top: 15px;
+      display: inline-block;
+      color: #0073e6;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="box">
+    <h2 id="heading">Account Recovery</h2>
+    <form method="POST" action="/recover">
+      <input type="hidden" name="type" id="recoverType" />
+      <input type="text" name="userid" placeholder="User ID" required />
+      <input type="email" name="email" placeholder="Email Address" required />
+      <button type="submit">Send Recovery Link</button>
+    </form>
+    <div class="back" onclick="goBack()">← Back to Login</div>
+  </div>
+
+  <script>
+    function goBack() {
+      window.location.href = "login.html";
+    }
+
+    // Set form based on query param
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type");
+    const heading = document.getElementById("heading");
+    const recoverType = document.getElementById("recoverType");
+
+    if (type === "first_time") {
+      heading.textContent = "First Time Login";
+    } else if (type === "forgot_password") {
+      heading.textContent = "Forgot Password";
+    } else {
+      heading.textContent = "Account Recovery";
+    }
+
+    recoverType.value = type;
+  </script>
+
+</body>
+
+</html>
